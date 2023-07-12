@@ -344,6 +344,33 @@ class TestAccountPaymentPartner(common.SavepointCase):
         invoice._onchange_partner_id()
         self.assertFalse(invoice.partner_bank_id)
 
+    def test_partner_onchange_for_refunds(self):
+        customer_refund = self.env['account.invoice'].create({
+            'partner_id': self.customer.id,
+            'type': 'out_refund',
+        })
+        customer_refund._onchange_partner_id()
+        self.assertEqual(customer_refund.payment_mode_id,
+                         self.customer_payment_mode)
+        supplier_refund = self.env['account.invoice'].create({
+            'partner_id': self.supplier.id,
+            'type': 'in_refund',
+            'journal_id': self.journal_c1.id,
+        })
+        supplier_refund._onchange_partner_id()
+        self.assertEqual(supplier_refund.partner_bank_id,
+                         self.supplier_bank)
+        self.assertEqual(supplier_refund.payment_mode_id,
+                         self.supplier_payment_mode)
+        vals = {'partner_id': False, 'type': 'out_refund'}
+        invoice = self.env['account.invoice'].new(vals)
+        invoice._onchange_partner_id()
+        self.assertFalse(invoice.payment_mode_id)
+        vals = {'partner_id': False, 'type': 'in_refund'}
+        invoice = self.env['account.invoice'].new(vals)
+        invoice._onchange_partner_id()
+        self.assertFalse(invoice.partner_bank_id)
+
     def test_onchange_payment_mode_id(self):
         mode = self.supplier_payment_mode
         mode.payment_method_id.bank_account_required = True
