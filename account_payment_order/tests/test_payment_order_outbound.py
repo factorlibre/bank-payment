@@ -209,6 +209,16 @@ class TestPaymentOrderOutbound(TestPaymentOrderOutboundBase):
         self.assertEqual(order.move_ids[0].date, order.payment_ids[0].date)
         self.assertEqual(order.state, "uploaded")
 
+    def line_creation(self, outbound_order):
+        vals = {
+            "order_id": outbound_order.id,
+            "partner_id": self.partner.id,
+            "currency_id": outbound_order.payment_mode_id.company_id.currency_id.id,
+            "amount_currency": 200.38,
+            "move_line_id": self.invoice.invoice_line_ids[0].id,
+        }
+        return self.env["account.payment.line"].create(vals)
+
     def test_account_payment_line_creation_without_payment_mode(self):
         self.invoice.payment_mode_id = False
         self.invoice.action_post()
@@ -260,6 +270,13 @@ class TestPaymentOrderOutbound(TestPaymentOrderOutboundBase):
         )
         with self.assertRaises(ValidationError):
             outbound_order.date_scheduled = date.today() - timedelta(days=2)
+        # Create two payment lines with the same
+        # move line id and try to assign them to outbound order
+        payment_line_1 = self.line_creation(outbound_order)
+        outbound_order.payment_line_ids |= payment_line_1
+        with self.assertRaises(ValidationError):
+            payment_line_2 = self.line_creation(outbound_order)
+            outbound_order.payment_line_ids |= payment_line_2
 
     def test_manual_line_and_manual_date(self):
         # Create payment order
