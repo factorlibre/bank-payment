@@ -1,6 +1,7 @@
 # Copyright 2019 ACSONE SA/NV
 # Copyright 2022 Tecnativa - Pedro M. Baeza
 # Copyright 2023 Noviat
+# Copyright 2024 FactorLibre - Aritz Olea
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from odoo import _, api, fields, models
@@ -67,3 +68,11 @@ class AccountPayment(models.Model):
                 self.env.context, default_payment_reference=self.payment_reference
             ),
         }
+
+    def _compute_available_partner_bank_ids(self):
+        order_pays = self.filtered(lambda p: p.payment_order_id and p.payment_line_ids)
+        for pay in order_pays:
+            pay.available_partner_bank_ids = pay.payment_line_ids[0].partner_bank_id
+        return super(
+            AccountPayment, self - order_pays
+        )._compute_available_partner_bank_ids()

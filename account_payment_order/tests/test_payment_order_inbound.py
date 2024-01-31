@@ -24,6 +24,7 @@ class TestPaymentOrderInboundBase(AccountTestInvoicingCommon):
         cls.partner = cls.env["res.partner"].create(
             {
                 "name": "Test Partner",
+                "bank_ids": [(0, 0, {"acc_number": "XX15001559627230"})],
             }
         )
         cls.inbound_mode = cls.env["account.payment.mode"].create(
@@ -158,3 +159,25 @@ class TestPaymentOrderInbound(TestPaymentOrderInboundBase):
         with self.assertRaises(ValidationError):
             payment_line_2 = self.line_creation(inbound_order)
             inbound_order.payment_line_ids |= payment_line_2
+
+    def test_payment_partner_bank_value(self):
+        payment_order = self.inbound_order
+        self.assertEqual(len(payment_order.ids), 1)
+
+        payment_order.write({"journal_id": self.journal.id})
+
+        self.assertEqual(len(payment_order.payment_line_ids), 1)
+        self.assertFalse(payment_order.payment_ids)
+
+        # Open payment order
+        payment_order.draft2open()
+
+        self.assertEqual(len(payment_order.payment_ids), 1)
+        payment = payment_order.payment_ids[0]
+        self.assertEqual(len(payment.payment_line_ids), 1)
+        payment_line = payment.payment_line_ids[0]
+        self.assertEqual(payment.partner_bank_id, payment_line.partner_bank_id)
+
+        # Assert payment line's bank has not changed
+        payment._compute_available_partner_bank_ids()
+        self.assertEqual(payment.partner_bank_id, payment_line.partner_bank_id)

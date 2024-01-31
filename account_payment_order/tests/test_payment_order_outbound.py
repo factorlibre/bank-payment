@@ -506,3 +506,32 @@ class TestPaymentOrderOutbound(TestPaymentOrderOutboundBase):
         self.assertEqual(len(payment_order.payment_line_ids), 1)
 
         self.assertEqual("F1242 R1234", payment_order.payment_line_ids.communication)
+
+    def test_payment_partner_bank_value(self):
+        # Open invoice
+        self.invoice.action_post()
+        # Add to payment order using the wizard
+        self.env["account.invoice.payment.line.multi"].with_context(
+            active_model="account.move", active_ids=self.invoice.ids
+        ).create({}).run()
+
+        payment_order = self.env["account.payment.order"].search(self.domain)
+        self.assertEqual(len(payment_order.ids), 1)
+
+        payment_order.write({"journal_id": self.bank_journal.id})
+
+        self.assertEqual(len(payment_order.payment_line_ids), 1)
+        self.assertFalse(payment_order.payment_ids)
+
+        # Open payment order
+        payment_order.draft2open()
+
+        self.assertEqual(len(payment_order.payment_ids), 1)
+        payment = payment_order.payment_ids[0]
+        self.assertEqual(len(payment.payment_line_ids), 1)
+        payment_line = payment.payment_line_ids[0]
+        self.assertEqual(payment.partner_bank_id, payment_line.partner_bank_id)
+
+        # Assert payment line's bank has not changed
+        payment._compute_available_partner_bank_ids()
+        self.assertEqual(payment.partner_bank_id, payment_line.partner_bank_id)
