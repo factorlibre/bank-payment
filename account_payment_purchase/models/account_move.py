@@ -13,7 +13,7 @@ class AccountMove(models.Model):
     def _onchange_purchase_auto_complete(self):
         new_mode = self.purchase_id.payment_mode_id.id or False
         new_bank = self.purchase_id.supplier_partner_bank_id.id or False
-        res = super()._onchange_purchase_auto_complete() or {}
+        res = {}
         if self.payment_mode_id and new_mode and self.payment_mode_id.id != new_mode:
             res["warning"] = {
                 "title": _("Warning"),
@@ -30,4 +30,5 @@ class AccountMove(models.Model):
             return res
         if new_bank:
             self.partner_bank_id = new_bank
+        res = super()._onchange_purchase_auto_complete()
         return res
