@@ -199,8 +199,19 @@ class AccountPaymentOrder(models.Model):
     @api.constrains("payment_line_ids")
     def _check_payment_lines(self):
         for order in self:
-            if len(order.payment_line_ids.move_line_id) != len(order.payment_line_ids):
-                raise ValidationError(_("Duplicated lines found."))
+            found_lines = self.env["account.move.line"]
+            for pay_line in order.payment_line_ids:
+                move_line = pay_line.move_line_id
+                if move_line in found_lines:
+                    raise ValidationError(
+                        _(
+                            "Duplicated lines found in order '%(order)s'. At least two "
+                            "lines belong to the move line '%(move_line)s'.",
+                            order=order.display_name,
+                            move_line=move_line.display_name,
+                        )
+                    )
+                found_lines += move_line
 
     @api.depends("payment_line_ids", "payment_line_ids.amount_company_currency")
     def _compute_total(self):
