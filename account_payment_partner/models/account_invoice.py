@@ -26,7 +26,7 @@ class AccountInvoice(models.Model):
             company = self.env.user.company_id
         res = super(AccountInvoice, self)._onchange_partner_id()
         if self.partner_id:
-            if self.type == 'in_invoice':
+            if self.type in ['in_invoice', 'in_refund']:
                 pay_mode = self.with_context(
                     force_company=company.id
                 ).partner_id.supplier_payment_mode_id
@@ -44,7 +44,7 @@ class AccountInvoice(models.Model):
                 else:
                     self.partner_bank_id = False
 
-            elif self.type == 'out_invoice':
+            elif self.type in ['out_invoice', 'out_refund']:
                 # No bank account assignation is done here as this is only
                 # needed for printing purposes and it can conflict with
                 # SEPA direct debit payments. Current report prints it.
@@ -53,7 +53,7 @@ class AccountInvoice(models.Model):
                 ).partner_id.customer_payment_mode_id
         else:
             self.payment_mode_id = False
-            if self.type == 'in_invoice':
+            if self.type in ['in_invoice', 'in_refund']:
                 self.partner_bank_id = False
         return res
 
