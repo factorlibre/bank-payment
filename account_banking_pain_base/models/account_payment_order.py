@@ -174,7 +174,8 @@ class AccountPaymentOrder(models.Model):
     def finalize_sepa_file_creation(self, xml_root, gen_args):
         xml_string = etree.tostring(
             xml_root, pretty_print=True, encoding='UTF-8',
-            xml_declaration=True)
+            xml_declaration=False,
+            doctype='<?xml version="1.0" encoding="UTF-8"?>')
         logger.debug(
             "Generated SEPA XML file in format %s below"
             % gen_args['pain_flavor'])
