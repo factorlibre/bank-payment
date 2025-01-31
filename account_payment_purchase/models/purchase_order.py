@@ -59,5 +59,7 @@ class PurchaseOrder(models.Model):
         correct value with compute and propagate payment mode to invoice."""
         invoice_vals = super()._prepare_invoice()
         invoice_vals.pop("partner_bank_id")
-        invoice_vals["payment_mode_id"] = self.payment_mode_id.id
+        avoid_assign_pay_mode = self._context.get("avoid_pay_mode_propagate", False)
+        if not avoid_assign_pay_mode:
+            invoice_vals["payment_mode_id"] = self.payment_mode_id.id
         return invoice_vals
