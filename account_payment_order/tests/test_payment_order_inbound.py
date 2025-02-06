@@ -119,7 +119,7 @@ class TestPaymentOrderInbound(TestPaymentOrderInboundBase):
     def test_invoice_communication_02(self):
         self.invoice.payment_reference = "R1234"
         self.assertEqual(
-            "R1234", self.invoice._get_payment_order_communication_direct()
+            self.invoice.name, self.invoice._get_payment_order_communication_direct()
         )
 
     def test_creation(self):

@@ -54,7 +54,7 @@ class AccountMove(models.Model):
             if self.is_purchase_document():
                 communication = self.payment_reference or self.ref
             else:
-                communication = self.payment_reference or self.name
+                communication = self.name or self.payment_reference
         return communication or ""
 
     def _get_payment_order_communication_full(self):
