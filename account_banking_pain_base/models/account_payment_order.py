@@ -531,6 +531,10 @@ class AccountPaymentOrder(models.Model):
             )
         return True
 
+    def _pain_uses_structured_address(self, pain_flavor):
+        """Return True if the PAIN flavor requires a structured postal address."""
+        return pain_flavor.startswith("pain.001.001.09")
+
     @api.model
     def generate_address_block(self, parent_node, partner, gen_args):
         """Generate the piece of the XML corresponding to PstlAdr"""
@@ -539,7 +543,7 @@ class AccountPaymentOrder(models.Model):
         pain_flavor = (gen_args.get("pain_flavor", "")).strip()
         payment_method = self.payment_mode_id.payment_method_id
         address_mode = payment_method.sepa_pain09_address_mode
-        if pain_flavor.startswith("pain.001.001.09"):
+        if self._pain_uses_structured_address(pain_flavor):
             if not partner.city:
                 raise UserError(
                     _(

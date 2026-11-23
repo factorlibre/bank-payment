@@ -203,10 +203,17 @@ msgstr "Pago consolidado a terceros"
 #. module: account_banking_pain_base
 #: model:ir.model.fields,help:account_banking_pain_base.field_account_payment_method__sepa_pain09_address_mode
 msgid ""
-"Controls how the <PstlAdr> block is generated for PAIN.001.001.09- Minimal: "
-"only City (TwnNm) and Country (Ctry)- Hybrid: City/Country plus optional "
-"AdrLine lines (street/street2) and optional Post Code (PstCd) when available."
+"Controls how the <PstlAdr> block is generated in the formats with structured "
+"address (PAIN.001.001.09 and PAIN.008.001.08).\n"
+"- Minimal: only City (TwnNm) and Country (Ctry).\n"
+"- Hybrid: City/Country plus optional AdrLine lines (street/street2) and "
+"optional Post Code (PstCd) when available."
 msgstr ""
+"Define cómo se genera el bloque <PstlAdr> en los formatos con dirección "
+"estructurada (PAIN.001.001.09 y PAIN.008.001.08).\n"
+"- Reducido: solo ciudad (TwnNm) y país (Ctry).\n"
+"- Híbrido: ciudad y país más, si existen, las líneas de dirección (AdrLine, "
+"calle y calle 2) y el código postal (PstCd)."
 
 #. module: account_banking_pain_base
 #: model:ir.model.fields.selection,name:account_banking_pain_base.selection__account_payment_line__purpose__cvcf
@@ -420,7 +427,7 @@ msgstr "Impuesto a la Vivienda"
 #. module: account_banking_pain_base
 #: model:ir.model.fields.selection,name:account_banking_pain_base.selection__account_payment_method__sepa_pain09_address_mode__hybrid
 msgid "Hybrid (City/Country + AdrLine)"
-msgstr ""
+msgstr "Híbrido (ciudad y país + líneas de dirección)"
 
 #. module: account_banking_pain_base
 #: model:ir.model.fields.selection,name:account_banking_pain_base.selection__account_payment_line__communication_type__iso
@@ -586,7 +593,7 @@ msgstr "Servicios médicos"
 #. module: account_banking_pain_base
 #: model:ir.model.fields.selection,name:account_banking_pain_base.selection__account_payment_method__sepa_pain09_address_mode__minimal
 msgid "Minimal (City + Country only)"
-msgstr ""
+msgstr "Reducido (solo ciudad y país)"
 
 #. module: account_banking_pain_base
 #. odoo-python
@@ -674,11 +681,13 @@ msgid ""
 "PAIN format %(flavor)s requires City (TwnNm). Partner missing City: "
 "%(partner)s. Please set a City or choose an older PAIN format."
 msgstr ""
+"El formato PAIN %(flavor)s exige la ciudad (TwnNm). Contacto sin ciudad: "
+"%(partner)s. Indique la ciudad o elija un formato PAIN anterior."
 
 #. module: account_banking_pain_base
 #: model:ir.model.fields,field_description:account_banking_pain_base.field_account_payment_method__sepa_pain09_address_mode
-msgid "PAIN.001.001.09 Address Mode"
-msgstr ""
+msgid "Structured Address Mode"
+msgstr "Modo de dirección estructurada"
 
 #. module: account_banking_pain_base
 #. odoo-python

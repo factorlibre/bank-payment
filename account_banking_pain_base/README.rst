@@ -140,6 +140,9 @@ Contributors
 * `Therp BV <https://www.therp.nl>`_:
 
   * Nikos Tsirintanis <ntsirintanis@therp.nl>
+* `Factor Libre <https://factorlibre.com>`__:
+
+  * Iván Bósquez
 
 Maintainers
 ~~~~~~~~~~~

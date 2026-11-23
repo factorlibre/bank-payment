@@ -26,10 +26,11 @@ class AccountPaymentMethod(models.Model):
         ],
         default="minimal",
         required=True,
-        string="PAIN.001.001.09 Address Mode",
+        string="Structured Address Mode",
         help=(
-            "Controls how the <PstlAdr> block is generated for PAIN.001.001.09"
-            "- Minimal: only City (TwnNm) and Country (Ctry)"
+            "Controls how the <PstlAdr> block is generated in the formats with "
+            "structured address (PAIN.001.001.09 and PAIN.008.001.08).\n"
+            "- Minimal: only City (TwnNm) and Country (Ctry).\n"
             "- Hybrid: City/Country plus optional AdrLine lines (street/street2) "
             "and optional Post Code (PstCd) when available."
         ),
