@@ -405,13 +405,24 @@ msgstr "Orden de pago"
 #: code:addons/account_banking_sepa_direct_debit/models/account_payment_order.py:0
 #, python-format
 msgid ""
+"PAIN format %(flavor)s requires Country (Ctry). Partner missing Country: "
+"%(partner)s. Please set a Country or choose an older PAIN format."
+msgstr ""
+"El formato PAIN %(flavor)s exige el país (Ctry). Contacto sin país: "
+"%(partner)s. Indique el país o elija un formato PAIN anterior."
+
+#. module: account_banking_sepa_direct_debit
+#. odoo-python
+#: code:addons/account_banking_sepa_direct_debit/models/account_payment_order.py:0
+#, python-format
+msgid ""
 "Payment Type Code '%s' is not supported. The only Payment Type Code "
-"supported for SEPA Direct Debit are 'pain.008.001.02', 'pain.008.001.03' and "
-"'pain.008.001.04'."
+"supported for SEPA Direct Debit are 'pain.008.001.02', 'pain.008.001.03', "
+"'pain.008.001.04' and 'pain.008.001.08'."
 msgstr ""
 "El código de tipo de pago '%s' no está soportado. Los únicos códigos de tipo "
 "de pago soportados para los adedudos directos SEPA son 'pain.008.001.02', "
-"'pain.008.001.03' y 'pain.008.001.04'."
+"'pain.008.001.03', 'pain.008.001.04' y 'pain.008.001.08'."
 
 #. module: account_banking_sepa_direct_debit
 #: model_terms:ir.ui.view,arch_db:account_banking_sepa_direct_debit.view_mandate_form
@@ -596,8 +607,8 @@ msgstr "Escriba el IAS de su compañía"
 
 #. module: account_banking_sepa_direct_debit
 #: model:ir.model.fields.selection,name:account_banking_sepa_direct_debit.selection__account_payment_method__pain_version__pain_008_001_02
-msgid "pain.008.001.02 (recommended for direct debit)"
-msgstr "pain.008.001.02 (recomendada para adeudos directos)"
+msgid "pain.008.001.02"
+msgstr "pain.008.001.02"
 
 #. module: account_banking_sepa_direct_debit
 #: model:ir.model.fields.selection,name:account_banking_sepa_direct_debit.selection__account_payment_method__pain_version__pain_008_001_03
@@ -608,6 +619,11 @@ msgstr "pain.008.001.03"
 #: model:ir.model.fields.selection,name:account_banking_sepa_direct_debit.selection__account_payment_method__pain_version__pain_008_001_04
 msgid "pain.008.001.04"
 msgstr "pain.008.001.04"
+
+#. module: account_banking_sepa_direct_debit
+#: model:ir.model.fields.selection,name:account_banking_sepa_direct_debit.selection__account_payment_method__pain_version__pain_008_001_08
+msgid "pain.008.001.08"
+msgstr "pain.008.001.08"
 
 #. module: account_banking_sepa_direct_debit
 #: model:ir.model.fields.selection,name:account_banking_sepa_direct_debit.selection__account_payment_method__pain_version__pain_008_003_02

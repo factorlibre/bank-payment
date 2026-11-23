@@ -12,3 +12,6 @@
   * Carlos Roca
   * Carolina Fernandez
 * Manuel Regidor <manuel.regidor@sygel.es>
+* `Factor Libre <https://factorlibre.com>`__:
+
+  * Iván Bósquez

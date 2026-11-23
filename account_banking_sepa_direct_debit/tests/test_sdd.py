@@ -7,6 +7,7 @@ import base64
 from lxml import etree
 
 from odoo import fields
+from odoo.exceptions import UserError
 from odoo.tests.common import TransactionCase
 from odoo.tools import float_compare
 
@@ -49,6 +50,7 @@ class TestSDDBase(TransactionCase):
         cls.partner_agrolait = cls.env["res.partner"].create({"name": "Agrolait"})
         cls.partner_c2c = cls.env["res.partner"].create({"name": "C2C"})
         cls.eur_currency = cls.env.ref("base.EUR")
+        cls.country_es = cls.env.ref("base.es")
         cls.setUpAdditionalAccounts()
         cls.setUpAccountJournal()
         cls.main_company = cls.company_B
@@ -72,6 +74,33 @@ class TestSDDBase(TransactionCase):
                 "customer_payment_mode_id": False,
                 "property_account_payable_id": cls.account_payable_company_B.id,
                 "property_account_receivable_id": cls.account_receivable_company_B.id,
+            }
+        )
+        cls.partner_agrolait.write(
+            {
+                "street": "Calle Mayor 1",
+                "street2": "Planta 2",
+                "zip": "28013",
+                "city": "Madrid",
+                "country_id": cls.country_es.id,
+            }
+        )
+        cls.partner_c2c.write(
+            {
+                "street": "Gran Via 22",
+                "street2": False,
+                "zip": "08001",
+                "city": "Barcelona",
+                "country_id": cls.country_es.id,
+            }
+        )
+        cls.main_company.partner_id.write(
+            {
+                "street": "Calle Alcala 100",
+                "street2": False,
+                "zip": "41001",
+                "city": "Sevilla",
+                "country_id": cls.country_es.id,
             }
         )
         cls.bank = cls.env["res.bank"].create(
@@ -327,7 +356,49 @@ class TestSDDBase(TransactionCase):
         payment_order.generated2uploaded()
         self.assertEqual(payment_order.state, "uploaded")
         self.assertEqual(self.mandate2.recurrent_sequence_type, "recurring")
-        return
+        return xml_root
+
+    def create_sdd_order(self):
+        """Create an open payment order with one line per debtor."""
+        self.mandate2.recurrent_sequence_type = "first"
+        invoice1 = self.create_invoice(self.partner_agrolait.id, self.mandate2, 42.0)
+        self.mandate12.type = "oneoff"
+        invoice2 = self.create_invoice(self.partner_c2c.id, self.mandate12, 11.0)
+        self.payment_mode.payment_method_id.mandate_required = True
+        for inv in [invoice1, invoice2]:
+            action = inv.create_account_payment_line()
+        payment_order = self.payment_order_model.browse(action["res_id"])
+        payment_order._compute_sepa()
+        payment_order.draft2open()
+        self.assertEqual(payment_order.state, "open")
+        return payment_order
+
+    def generate_sdd_xml(self, payment_order):
+        action = payment_order.open2generated()
+        attachment = self.attachment_model.browse(action["res_id"])
+        return etree.fromstring(base64.b64decode(attachment.datas))
+
+    @staticmethod
+    def xml_namespaces(xml_root):
+        return {"p": xml_root.nsmap[None]}
+
+    def set_pain_version(self, version):
+        """Assert the version is selectable, then assign it."""
+        method = self.payment_mode.payment_method_id
+        keys = [k for k, _label in method._fields["pain_version"].selection]
+        self.assertIn(version, keys, "pain_version option missing: %s" % version)
+        method.pain_version = version
+        return method
+
+    def get_address_blocks(self, xml_root):
+        """Return (creditor PstlAdr list, debtor PstlAdr list).
+
+        There is one Cdtr per PmtInf, so one creditor block per PmtInf.
+        """
+        ns = self.xml_namespaces(xml_root)
+        cdtr = xml_root.xpath("//p:PmtInf/p:Cdtr/p:PstlAdr", namespaces=ns)
+        dbtr = xml_root.xpath("//p:DrctDbtTxInf/p:Dbtr/p:PstlAdr", namespaces=ns)
+        return cdtr, dbtr
 
     def create_invoice(self, partner_id, mandate, price_unit, inv_type="out_invoice"):
         invoice_vals = [
@@ -375,3 +446,124 @@ class TestSDD(TestSDDBase):
     def test_pain_001_04(self):
         self.payment_mode.payment_method_id.pain_version = "pain.008.001.04"
         self.check_sdd()
+
+    def test_pain_version_selection_08(self):
+        method = self.set_pain_version("pain.008.001.08")
+        self.assertEqual(method.pain_version, "pain.008.001.08")
+
+    def test_pain_001_08(self):
+        self.set_pain_version("pain.008.001.08")
+        xml_root = self.check_sdd()
+        self.assertEqual(
+            xml_root.nsmap[None], "urn:iso:std:iso:20022:tech:xsd:pain.008.001.08"
+        )
+        ns = self.xml_namespaces(xml_root)
+        self.assertTrue(
+            xml_root.xpath("/p:Document/p:CstmrDrctDbtInitn", namespaces=ns),
+            "Expected CstmrDrctDbtInitn root element",
+        )
+        self.assertTrue(
+            xml_root.xpath("//p:DbtrAgt/p:FinInstnId/p:BICFI", namespaces=ns),
+            "Expected BICFI in debtor agent",
+        )
+        self.assertFalse(xml_root.xpath("//p:DbtrAgt//p:BIC", namespaces=ns))
+
+    def test_pain_001_08_structured_address(self):
+        method = self.set_pain_version("pain.008.001.08")
+        method.sepa_pain09_address_mode = "minimal"
+        xml_root = self.generate_sdd_xml(self.create_sdd_order())
+        ns = self.xml_namespaces(xml_root)
+        cdtr, dbtr = self.get_address_blocks(xml_root)
+        n_pmtinf = len(xml_root.xpath("//p:PmtInf", namespaces=ns))
+        self.assertGreaterEqual(n_pmtinf, 1)
+        self.assertEqual(len(cdtr), n_pmtinf)
+        self.assertEqual(len(dbtr), 2)
+        cities = []
+        for block in cdtr + dbtr:
+            self.assertEqual(len(block.xpath("p:TwnNm", namespaces=ns)), 1)
+            self.assertEqual(block.xpath("p:Ctry", namespaces=ns)[0].text, "ES")
+            self.assertFalse(block.xpath("p:AdrLine", namespaces=ns))
+            self.assertFalse(block.xpath("p:PstCd", namespaces=ns))
+            cities.append(block.xpath("p:TwnNm", namespaces=ns)[0].text)
+        self.assertEqual(set(cities[:n_pmtinf]), {"Sevilla"})
+        self.assertEqual(sorted(cities[n_pmtinf:]), ["Barcelona", "Madrid"])
+
+    def test_pain_001_08_hybrid_address(self):
+        method = self.set_pain_version("pain.008.001.08")
+        method.sepa_pain09_address_mode = "hybrid"
+        xml_root = self.generate_sdd_xml(self.create_sdd_order())
+        ns = self.xml_namespaces(xml_root)
+        cdtr, dbtr = self.get_address_blocks(xml_root)
+        n_pmtinf = len(xml_root.xpath("//p:PmtInf", namespaces=ns))
+        self.assertGreaterEqual(n_pmtinf, 1)
+        self.assertEqual(len(cdtr), n_pmtinf)
+        self.assertEqual(len(dbtr), 2)
+        cdtr_tags = [[etree.QName(c).localname for c in block] for block in cdtr]
+        dbtr_tags = [[etree.QName(c).localname for c in block] for block in dbtr]
+        for tags in cdtr_tags:
+            self.assertEqual(tags, ["PstCd", "TwnNm", "Ctry", "AdrLine"])
+        self.assertIn(
+            ["PstCd", "TwnNm", "Ctry", "AdrLine", "AdrLine"],
+            dbtr_tags,
+            "Debtor with street and street2 must have two AdrLine",
+        )
+        self.assertIn(["PstCd", "TwnNm", "Ctry", "AdrLine"], dbtr_tags)
+
+    def test_pain_001_08_requires_city(self):
+        method = self.set_pain_version("pain.008.001.08")
+        method.sepa_pain09_address_mode = "minimal"
+        order = self.create_sdd_order()
+        self.partner_c2c.city = False
+        with self.assertRaises(UserError) as cm:
+            order.open2generated()
+        self.assertIn("C2C", str(cm.exception))
+        self.assertIn("City", str(cm.exception))
+        self.assertNotEqual(order.state, "generated")
+
+    def test_pain_001_08_requires_country(self):
+        method = self.set_pain_version("pain.008.001.08")
+        method.sepa_pain09_address_mode = "minimal"
+        order = self.create_sdd_order()
+        self.partner_c2c.country_id = False
+        with self.assertRaises(UserError) as cm:
+            order.open2generated()
+        self.assertIn("Country", str(cm.exception))
+        self.assertIn("C2C", str(cm.exception))
+        self.assertNotEqual(order.state, "generated")
+
+    def test_pain_001_08_requires_creditor_address(self):
+        method = self.set_pain_version("pain.008.001.08")
+        method.sepa_pain09_address_mode = "minimal"
+        creditor = self.main_company.partner_id
+        for field, label in (("city", "City"), ("country_id", "Country")):
+            with self.subTest(field=field):
+                order = self.create_sdd_order()
+                original = creditor[field]
+                creditor[field] = False
+                with self.assertRaises(UserError) as cm:
+                    order.open2generated()
+                creditor[field] = original
+                self.assertIn(label, str(cm.exception))
+                self.assertIn(creditor.display_name, str(cm.exception))
+                self.assertNotEqual(order.state, "generated")
+
+    def test_pain_001_02_03_04_address_unchanged(self):
+        for version in ("pain.008.001.02", "pain.008.001.03", "pain.008.001.04"):
+            with self.subTest(version=version):
+                self.payment_mode.payment_method_id.pain_version = version
+                xml_root = self.generate_sdd_xml(self.create_sdd_order())
+                ns = self.xml_namespaces(xml_root)
+                cdtr, dbtr = self.get_address_blocks(xml_root)
+                n_pmtinf = len(xml_root.xpath("//p:PmtInf", namespaces=ns))
+                self.assertGreaterEqual(n_pmtinf, 1)
+                self.assertEqual(len(cdtr), n_pmtinf)
+                self.assertEqual(len(dbtr), 2)
+                for block in cdtr + dbtr:
+                    self.assertEqual(block.xpath("p:Ctry", namespaces=ns)[0].text, "ES")
+                    self.assertTrue(block.xpath("p:AdrLine", namespaces=ns))
+                    self.assertFalse(block.xpath("p:TwnNm", namespaces=ns))
+                for block in cdtr:
+                    lines = [
+                        line.text for line in block.xpath("p:AdrLine", namespaces=ns)
+                    ]
+                    self.assertEqual(lines, ["Calle Alcala 100", "41001 Sevilla"])

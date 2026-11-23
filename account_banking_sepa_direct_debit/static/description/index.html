@@ -379,13 +379,15 @@ ul.auto-toc {
 <p>Module to export direct debit payment orders in SEPA XML file format.</p>
 <p>SEPA PAIN (PAyment INitiation) is the new european standard for
 Customer-to-Bank payment instructions. This module implements SEPA Direct
-Debit (SDD), more specifically PAIN versions 008.001.02, 008.001.03 and
-008.001.04. It is part of the ISO 20022 standard, available on
+Debit (SDD), more specifically PAIN versions 008.001.02, 008.001.03, 008.001.04 and
+008.001.08. PAIN 008.001.08 is generated with the structured postal address of
+both the creditor and the debtor (the address mode is configurable on the
+payment method). It is part of the ISO 20022 standard, available on
 <a class="reference external" href="http://www.iso20022.org">http://www.iso20022.org</a>.</p>
 <p>The Implementation Guidelines for SEPA Direct Debit published by the European
 Payments Council (<a class="reference external" href="http://http://www.europeanpaymentscouncil.eu">http://http://www.europeanpaymentscouncil.eu</a>) use PAIN
-version 008.001.02. So if you don’t know which version your bank supports, you
-should try version 008.001.02 first.</p>
+version 008.001.02. Version 008.001.08 is the default one in new installations.
+If your bank does not support it yet, use version 008.001.02.</p>
 <p><strong>Table of contents</strong></p>
 <div class="contents local topic" id="contents">
 <ul class="simple">
@@ -436,6 +438,9 @@ automatically created upon module installation).</li>
 <li>If not, go <em>Invoicing/Accounting &gt; Configuration &gt; Management &gt; Payment Methods</em>.</li>
 <li>Locate the “SEPA Direct Debit for customers” record and open it.</li>
 <li>Change the “PAIN version” according your needs.</li>
+<li>With PAIN version 008.001.08 you can also choose the “Structured Address
+Mode”: <em>Minimal</em> (city and country) or <em>Hybrid</em> (also post code and street
+lines). City and country are mandatory on the creditor and on the debtors.</li>
 <li>If you need to handle several PAIN versions, just duplicate the payment
 method adjusting this field on each for having them.</li>
 </ol>
@@ -481,6 +486,10 @@ If you spotted it first, help us to smash it by providing a detailed and welcome
 </ul>
 </li>
 <li>Manuel Regidor &lt;<a class="reference external" href="mailto:manuel.regidor&#64;sygel.es">manuel.regidor&#64;sygel.es</a>&gt;</li>
+<li><a class="reference external" href="https://factorlibre.com">Factor Libre</a>:<ul>
+<li>Iván Bósquez</li>
+</ul>
+</li>
 </ul>
 </div>
 <div class="section" id="maintainers">

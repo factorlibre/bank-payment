@@ -22,5 +22,8 @@ For defining a payment mode that uses SEPA direct debit:
 #. If not, go *Invoicing/Accounting > Configuration > Management > Payment Methods*.
 #. Locate the "SEPA Direct Debit for customers" record and open it.
 #. Change the "PAIN version" according your needs.
+#. With PAIN version 008.001.08 you can also choose the "Structured Address
+   Mode": *Minimal* (city and country) or *Hybrid* (also post code and street
+   lines). City and country are mandatory on the creditor and on the debtors.
 #. If you need to handle several PAIN versions, just duplicate the payment
    method adjusting this field on each for having them.

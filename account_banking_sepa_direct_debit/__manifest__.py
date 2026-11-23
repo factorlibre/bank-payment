@@ -20,6 +20,7 @@
     },
     "data": [
         "views/account_banking_mandate_view.xml",
+        "views/account_payment_method.xml",
         "views/res_config_settings.xml",
         "views/account_payment_mode.xml",
         "data/mandate_expire_cron.xml",

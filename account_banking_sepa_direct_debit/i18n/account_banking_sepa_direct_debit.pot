@@ -497,7 +497,7 @@ msgstr ""
 
 #. module: account_banking_sepa_direct_debit
 #: model:ir.model.fields.selection,name:account_banking_sepa_direct_debit.selection__account_payment_method__pain_version__pain_008_001_02
-msgid "pain.008.001.02 (recommended for direct debit)"
+msgid "pain.008.001.02"
 msgstr ""
 
 #. module: account_banking_sepa_direct_debit

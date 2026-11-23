@@ -4,7 +4,7 @@
 
 from lxml import etree
 
-from odoo import _, exceptions, fields, models
+from odoo import _, api, exceptions, fields, models
 from odoo.exceptions import UserError
 
 
@@ -36,13 +36,17 @@ class AccountPaymentOrder(models.Model):
             bic_xml_tag = "BICFI"
             name_maxsize = 140
             root_xml_tag = "CstmrDrctDbtInitn"
+        elif pain_flavor.startswith("pain.008.001.08"):
+            bic_xml_tag = "BICFI"
+            name_maxsize = 140
+            root_xml_tag = "CstmrDrctDbtInitn"
         else:
             raise UserError(
                 _(
                     "Payment Type Code '%s' is not supported. The only "
                     "Payment Type Code supported for SEPA Direct Debit are "
-                    "'pain.008.001.02', 'pain.008.001.03' and "
-                    "'pain.008.001.04'."
+                    "'pain.008.001.02', 'pain.008.001.03', "
+                    "'pain.008.001.04' and 'pain.008.001.08'."
                 )
                 % pain_flavor
             )
@@ -262,6 +266,25 @@ class AccountPaymentOrder(models.Model):
         control_sum_a.text = "%.2f" % amount_control_sum_a
 
         return self.finalize_sepa_file_creation(xml_root, gen_args)
+
+    def _pain_uses_structured_address(self, pain_flavor):
+        return super()._pain_uses_structured_address(
+            pain_flavor
+        ) or pain_flavor.startswith("pain.008.001.08")
+
+    @api.model
+    def generate_address_block(self, parent_node, partner, gen_args):
+        pain_flavor = (gen_args.get("pain_flavor", "")).strip()
+        if pain_flavor.startswith("pain.008.001.08") and not partner.country_id:
+            raise UserError(
+                _(
+                    "PAIN format %(flavor)s requires Country (Ctry). "
+                    "Partner missing Country: %(partner)s. "
+                    "Please set a Country or choose an older PAIN format."
+                )
+                % {"flavor": pain_flavor, "partner": partner.display_name}
+            )
+        return super().generate_address_block(parent_node, partner, gen_args)
 
     def generated2uploaded(self):
         """Write 'last debit date' on mandates

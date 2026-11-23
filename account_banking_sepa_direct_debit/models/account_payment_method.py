@@ -9,15 +9,17 @@ class AccountPaymentMethod(models.Model):
 
     pain_version = fields.Selection(
         selection_add=[
-            ("pain.008.001.02", "pain.008.001.02 (recommended for direct debit)"),
+            ("pain.008.001.02", "pain.008.001.02"),
             ("pain.008.001.03", "pain.008.001.03"),
             ("pain.008.001.04", "pain.008.001.04"),
+            ("pain.008.001.08", "pain.008.001.08"),
             ("pain.008.003.02", "pain.008.003.02 (direct debit in Germany)"),
         ],
         ondelete={
             "pain.008.001.02": "set null",
             "pain.008.001.03": "set null",
             "pain.008.001.04": "set null",
+            "pain.008.001.08": "set null",
             "pain.008.003.02": "set null",
         },
     )
@@ -28,6 +30,7 @@ class AccountPaymentMethod(models.Model):
             "pain.008.001.02",
             "pain.008.001.03",
             "pain.008.001.04",
+            "pain.008.001.08",
             "pain.008.003.02",
         ]:
             path = "account_banking_sepa_direct_debit/data/%s.xsd" % self.pain_version
